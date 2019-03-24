@@ -14,21 +14,23 @@ img.L_ = linspace(0, img.L, img.L+1);
 job = 0;
 fig = [];
 
-function [fig]=MyFigure()
-  mon=get(0,'MonitorPositions');
-  x=(rand*0.1+0.1)*mon(3);
-  y=(rand*0.1+0.2)*mon(4);
-  fig=figure('units','pixel','position',[x y 600 400]);
+function [fig] = MyFigure()
+  mon = get(0, 'MonitorPositions');
+  x = (rand*0.1 + 0.1)*mon(3);
+  y = (rand*0.1 + 0.2)*mon(4);
+  fig = figure('units', 'pixel', 'position', [x y 600 400]);
 end
 
-function []=MyImshow(fig,jmg,fn,job)
-  jmg=jmg(2:end,2:end,:);% remove boundary
-  figure(fig); imshow(uint8(jmg));
-  set(gca,'position',[0 0 1 1]);
-  set(gcf,'name',fn); drawnow;
+function [] = MyImshow(fig, jmg, fn, job)
+  jmg = jmg(2:end, 2:end, :);% remove boundary
+  figure(fig);
+  imshow(uint8(jmg));
+  set(gca, 'position', [0 0 1 1]);
+  set(gcf, 'name', fn);
+  drawnow;
 end
 
-function [img, jmg]=myImResize(img, jmg)
+function [img, jmg] = myImResize(img, jmg)
   [v, u] = size(jmg);
   if u > v,% landscape
     k = [img.h img.w];
@@ -40,27 +42,27 @@ function [img, jmg]=myImResize(img, jmg)
   img.N = img.V*img.U;
 end
 
-function [ENH,ovr]=MyRestore(ENH,GRY,img)
-  z0=find(ENH<0);
-  ENH(z0)=GRY(z0);
+function [ENH, ovr] = MyRestore(ENH, GRY, img)
+  z0 = find(ENH<  0);
+  ENH(z0) = GRY(z0);
   
-  z1=find(ENH>1);
-  ENH(z1)=GRY(z1);
+  z1 = find(ENH>1);
+  ENH(z1) = GRY(z1);
   
-  ovr=length(z0)+length(z1);
-  ovr=ovr/img.N;
+  ovr = length(z0) + length(z1);
+  ovr = ovr/img.N;
 end
 
-function [ENH,ent,ovr]=MyGolden(k,GRY,MKF,img)
-  TAH1=0.5*(1+tanh(3-12*abs(GRY-0.5)));
-  TAH2=0.5*(1+tanh(3-(6*abs(MKF)-0.5)));
-  TAH=TAH1.*TAH2;
-  ENH=GRY+k*TAH.*MKF;
-  [ENH,ovr]=MyRestore(ENH,GRY,img);
-  ent=entropy(ENH(2:end-1,2:end-1))*(1-ovr);
+function [ENH, ent, ovr] = MyGolden(k, GRY, MKF, img)
+  TAH1 = 0.5*(1 + tanh(3 - 12*abs(GRY - 0.5)));
+  TAH2 = 0.5*(1 + tanh(3 - (6*abs(MKF) - 0.5)));
+  TAH = TAH1.*TAH2;
+  ENH = GRY + k*TAH.*MKF;
+  [ENH, ovr] = MyRestore(ENH, GRY, img);
+  ent = entropy(ENH(2:end-1, 2:end-1))*(1 - ovr);
 end
 
-function [kmg, ovr, k]=AUSM(img, GRY)
+function [kmg, ovr, k] = AUSM(img, GRY)
   H = [-1 -1 -1; -1 8 -1; -1 -1 -1];
   
   MKF_ = imfilter(GRY, H, 'same');
@@ -96,7 +98,7 @@ function [kmg, ovr, k]=AUSM(img, GRY)
       [ENH, ent(2), ovr(2)] = MyGolden(k(2), GRY, MKF, img);
     end;
   end;
-  kmg=ENH*img.L;
+  kmg = ENH*img.L;
 end;
 
 
@@ -116,6 +118,6 @@ if bn > 0,
   job = job + 1;
   
   [filteringImg, ovr, k] = AUSM(img, img.GRAY);
-  fig(end+1)=MyFigure();
-  MyImshow(fig(end),img.L*filteringImg/MAX_PIXEL_VALUE_TIFF, fn, job);
+  fig(end+1) = MyFigure();
+  MyImshow(fig(end), img.L*filteringImg/MAX_PIXEL_VALUE_TIFF, fn, job);
 end;
