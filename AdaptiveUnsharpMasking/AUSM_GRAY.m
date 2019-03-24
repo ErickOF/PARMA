@@ -9,28 +9,27 @@ pkg load image;
 img.h = 360;
 img.w = 480;
 img.L = 255;
-img.L_ = linspace(0, img.L, img.L+1);
 
 job = 0;
 fig = [];
 
-function [fig] = MyFigure()
+function [fig] = plotImage()
   mon = get(0, 'MonitorPositions');
   x = (rand*0.1 + 0.1)*mon(3);
   y = (rand*0.1 + 0.2)*mon(4);
   fig = figure('units', 'pixel', 'position', [x y 600 400]);
 end
 
-function [] = MyImshow(fig, jmg, fn, job)
+function [] = showImage(fig, jmg, filename, job)
   jmg = jmg(2:end, 2:end, :);% remove boundary
   figure(fig);
   imshow(uint8(jmg));
   set(gca, 'position', [0 0 1 1]);
-  set(gcf, 'name', fn);
+  set(gcf, 'name', filename);
   drawnow;
 end
 
-function [img, jmg] = myImResize(img, jmg)
+function [img, jmg] = resizeImage(img, jmg)
   [v, u] = size(jmg);
   if u > v,% landscape
     k = [img.h img.w];
@@ -103,21 +102,20 @@ end;
 
 
 % Main
-[fn, pn, bn] = uigetfile('C:\\Users\\ErickOF\\Google Drive\\PARMA\\Datasets\\B2\\*.tif');
+[filename, path, index] = uigetfile('C:\\Users\\ErickOF\\Google Drive\\PARMA\\Datasets\\B2\\*.tif');
 
-final = [];
 MAX_PIXEL_VALUE_TIFF = 0;
 
-if bn > 0,
-  img.TIFF = double(imread([pn fn]));
+if index > 0,
+  img.TIFF = double(imread([path filename]));
   MAX_PIXEL_VALUE_TIFF = max(img.TIFF(:)(:))
-  [img, img.GRAY] = myImResize(img, img.L*img.TIFF/MAX_PIXEL_VALUE_TIFF);
-  fig(end + 1) = MyFigure();
-  MyImshow(fig(end), img.GRAY, fn, job);
+  [img, img.GRAY] = resizeImage(img, img.L*img.TIFF/MAX_PIXEL_VALUE_TIFF);
+  fig(end + 1) = plotImage();
+  showImage(fig(end), img.GRAY, filename, job);
   
   job = job + 1;
   
   [filteringImg, ovr, k] = AUSM(img, img.GRAY);
-  fig(end+1) = MyFigure();
-  MyImshow(fig(end), img.L*filteringImg/MAX_PIXEL_VALUE_TIFF, fn, job);
+  fig(end+1) = plotImage();
+  showImage(fig(end), img.L*filteringImg/MAX_PIXEL_VALUE_TIFF, filename, job);
 end;
