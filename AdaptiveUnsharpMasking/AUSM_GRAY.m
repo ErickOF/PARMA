@@ -112,8 +112,8 @@ if index > 0,
   [img, img.GRAY] = resizeImage(img, img.L*img.TIFF/MAX_PIXEL_VALUE_TIFF);
   fig(end + 1) = plotImage();
   showImage(fig(end), img.GRAY, filename, job);
-  
-  job = job + 1;
+
+  job += 1;
   
   [filteringImg, ovr, k] = AUSM(img, img.GRAY);
   fig(end+1) = plotImage();

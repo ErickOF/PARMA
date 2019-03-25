@@ -20,94 +20,121 @@ job = 0;
 fig = [];
 
 
-function [kmg,ovr,k]=MyTanhF(img,jmg)
+function [kmg,ovr,k] = AUMS_GRAY(img, jmg)
   H=[-1 -1 -1; -1 8 -1; -1 -1 -1];
-  jmg=MyStretch(img,jmg);
+  jmg = MyStretch(img,jmg);
   
-  HSI=rgb2hsi(jmg);
-  GRY=HSI(:,:,3);
+  HSI = rgb2hsi(jmg);
+  GRY = HSI(:,:,3);
   
-  MKF_=imfilter(GRY,H,'same');
-  MKF=zeros(size(MKF_));
-  MKF(2:end-1,2:end-1)=MKF_(2:end-1,2:end-1);
-  kL=0; kH=2; rng=kH-kL; rho=0.5*(sqrt(5)-1); tol=0.01;
-  k(1)=kL+(1-rho)*rng; k(2)=kL+rho*rng;
-  [ENH(:,:,1),ent(1),ovr(1)]=MyGolden(k(1),GRY,MKF,img);
-  [ENH(:,:,2),ent(2),ovr(2)]=MyGolden(k(2),GRY,MKF,img);
-  while rng>tol,
-    k_=k; ovr_=ovr;
-    if ent(1)>ent(2),
-      kH=k(2); rng=kH-kL; k(1)=kL+(1-rho)*rng; k(2)=kL+rho*rng; ent(2)=ent(1);
-      [ENH,ent(1),ovr(1)]=MyGolden(k(1),GRY,MKF,img);
+  MKF_ = imfilter(GRY, H, 'same');
+  MKF = zeros(size(MKF_));
+  MKF(2:end-1,2:end-1) = MKF_(2:end-1,2:end-1);
+  
+  kL = 0;
+  kH = 2;
+  rng = kH-kL;
+  rho = 0.5*(sqrt(5)-1);
+  tol = 0.01;
+  
+  k(1) = kL + (1-rho)*rng;
+  k(2) = kL + rho*rng;
+
+  [ENH(:,:,1), ent(1), ovr(1)] = MyGolden(k(1), GRY, MKF, img);
+  [ENH(:,:,2), ent(2), ovr(2)] = MyGolden(k(2), GRY, MKF, img);
+  
+  while rng > tol,
+    k_ = k;
+    ovr_ = ovr;
+    if ent(1) > ent(2),
+      kH = k(2);
+      rng = kH - kL;
+      k(1) = kL + (1-rho)*rng;
+      k(2) = kL + rho*rng;
+      ent(2) = ent(1);
+      [ENH, ent(1), ovr(1)] = MyGolden(k(1), GRY, MKF, img);
     else
-      kL=k(1); rng=kH-kL; k(1)=kL+(1-rho)*rng; k(2)=kL+rho*rng; ent(1)=ent(2);
-      [ENH,ent(2),ovr(2)]=MyGolden(k(2),GRY,MKF,img);
+      kL = k(1);
+      rng = kH - kL;
+      k(1) = kL + (1-rho)*rng;
+      k(2) = kL + rho*rng;
+      ent(1) = ent(2);
+      [ENH, ent(2), ovr(2)] = MyGolden(k(2), GRY, MKF, img);
     end;
   end;
-  ovr=mean(ovr_); k=mean(k_);
-  HSI(:,:,3)=ENH;
-  kmg=hsi2rgb(HSI);
-  kmg=uint8(kmg*img.L);
+  ovr = mean(ovr_);
+  k = mean(k_);
+  HSI(:,:,3) = ENH;
+  kmg = hsi2rgb(HSI);
+  kmg = uint8(kmg*img.L);
 end
 
 
-function [ENH,ent,ovr]=MyGolden(k,GRY,MKF,img)
-  TAH1=0.5*(1+tanh(3-12*abs(GRY-0.5)));
-  TAH2=0.5*(1+tanh(3-(6*abs(MKF)-0.5)));
-  TAH=TAH1.*TAH2;
-  ENH=GRY+k*TAH.*MKF;
-  [ENH,ovr]=MyRestore(ENH,GRY,img);
-  ent=entropy(ENH(2:end-1,2:end-1))*(1-ovr);
+function [ENH, ent, ovr] = MyGolden(k, GRY, MKF, img)
+  TAH1 = 0.5*(1 + tanh(3 - 12*abs(GRY - 0.5)));
+  TAH2 = 0.5*(1 + tanh(3 - (6*abs(MKF) - 0.5)));
+  TAH = TAH1.*TAH2;
+  ENH = GRY + k*TAH.*MKF;
+  [ENH, ovr] = MyRestore(ENH, GRY, img);
+  ent = entropy(ENH(2:end-1, 2:end-1))*(1 - ovr);
 end
 
 
-function [ENH,ovr]=MyRestore(ENH,GRY,img)
-  z0=find(ENH<0);
-  ENH(z0)=GRY(z0);
+function [ENH, ovr] = MyRestore(ENH, GRY, img)
+  z0 = find(ENH < 0);
+  ENH(z0) = GRY(z0);
   
-  z1=find(ENH>1);
-  ENH(z1)=GRY(z1);
+  z1 = find(ENH > 1);
+  ENH(z1) = GRY(z1);
   
-  ovr=length(z0)+length(z1);
-  ovr=ovr/img.N;
+  ovr = length(z0) + length(z1);
+  ovr = ovr / img.N;
 end
 
 
-function [RGB]=MyStretch(img,RGB)
-  RGB=double(RGB)/img.L;
-  for k=1:size(RGB,3),
-    mi=min(min(RGB(:,:,k))); RGB(:,:,k)=RGB(:,:,k)-mi;
-    mx=max(max(RGB(:,:,k))); RGB(:,:,k)=RGB(:,:,k)/mx;
+function [RGB] = MyStretch(img, RGB)
+  RGB = double(RGB)/img.L;
+  for k=1:size(RGB, 3),
+    mi = min(min(RGB(:,:,k)));
+    RGB(:,:,k) = RGB(:,:,k) - mi;
+    
+    mx = max(max(RGB(:,:,k)));
+    RGB(:,:,k) = RGB(:,:,k)/mx;
   end;
-  RGB=uint8(RGB*img.L);
+  RGB = uint8(RGB*img.L);
 end
 
 
-function [fig]=MyFigure()
-  mon=get(0,'MonitorPositions');
-  x=(rand*0.1+0.1)*mon(3);
-  y=(rand*0.1+0.2)*mon(4);
-  fig=figure('units','pixel','position',[x y 600 400]);
+function [fig] = getFig()
+  mon = get(0, 'MonitorPositions');
+  x = (rand*0.1 + 0.1)*mon(3);
+  y = (rand*0.1 + 0.2)*mon(4);
+  fig = figure('units', 'pixel', 'position', [x y 600 400]);
 end
 
 
-function []=MyImshow(fig,jmg,fn,job)
-  jmg=jmg(2:end,2:end,:);% remove boundary
-  figure(fig); imshow(uint8(jmg));
-  set(gca,'position',[0 0 1 1]);
-  set(gcf,'name',fn); drawnow;
+function [] = plotImg(fig, jmg, filename, job)
+  % remove boundary
+  jmg = jmg(2:end, 2:end, :);
+  figure(fig);
+  imshow(uint8(jmg));
+  set(gca, 'position', [0 0 1 1]);
+  set(gcf, 'name', filename);
+  drawnow;
 end
 
 
-function [img, jmg] = myImResize(img, jmg)
+function [img, jmg] = resizeImg(img, jmg)
   [v, u, w] = size(jmg);
-  if u > v,% landscape
+  if u > v,
     k = [img.h img.w];
-  else% portrait
+  else
     k = [img.w img.h];
   end;
-  jmg = imresize(jmg, k, 'bilinear');% resize
-  [img.V, img.U, img.N] = size(jmg);% image size 
+  % resize
+  jmg = imresize(jmg, k, 'bilinear');
+  % image size
+  [img.V, img.U, img.N] = size(jmg); 
   img.N = img.V*img.U;
 end
 
@@ -160,7 +187,7 @@ function rgb = hsi2rgb(hsi)
                       cos(pi - H(idx)));
   B(idx) = 3*I(idx) - (R(idx) + G(idx));
   % BR sector.
-  idx = find( (4*pi/3 <= H) & (H <= 2*pi));
+  idx = find((4*pi/3 <= H) & (H <= 2*pi));
   G(idx) = I(idx) .* (1 - S(idx));
   B(idx) = I(idx) .* (1 + S(idx) .* cos(H(idx) - 4*pi/3) ./ ...
                                              cos(5*pi/3 - H(idx)));
@@ -173,20 +200,20 @@ end
 
 
 % Main
-[fn, pn, bn] = uigetfile('C:\\Users\\ErickOF\\Google Drive\\PARMA\\Datasets\\B2\\*.tif');
+[filename, path, index] = uigetfile('C:\\Users\\ErickOF\\Google Drive\\PARMA\\Datasets\\B2\\*.tif');
 
-if bn > 0,
-  loadedImg = double(imread([pn fn]));
+if index > 0,
+  loadedImg = double(imread([path filename]));
   loadedImg *= img.L/max(loadedImg(:)(:)(:));
   img.JPG = cat(3, loadedImg, loadedImg, loadedImg);
   
-  [img, img.RGB] = myImResize(img, img.JPG);
-  fig(end + 1) = MyFigure();
-  MyImshow(fig(end), img.RGB, fn, job);
+  [img, img.RGB] = resizeImg(img, img.JPG);
+  fig(end + 1) = getFig();
+  plotImg(fig(end), img.RGB, filename, job);
   
-  job = job + 1;
+  job += 1;
   
-  [imgTanhF, ovr, k] = MyTanhF(img, img.RGB);
-  fig(end+1)=MyFigure();
-  MyImshow(fig(end),imgTanhF,fn,job);
+  [imgTanhF, ovr, k] = AUMS_GRAY(img,  img.RGB);
+  fig(end+1) = getFig();
+  plotImg(fig(end), imgTanhF, filename, job);
 end;
