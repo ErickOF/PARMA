@@ -20,16 +20,16 @@ job = 0;
 fig = [];
 
 
-function [kmg,ovr,k] = AUMS_GRAY(img, jmg)
-  H=[-1 -1 -1; -1 8 -1; -1 -1 -1];
+function [kmg, ovr, k] = AUMS_GRAY(img, jmg, K=8)
+  H = [-1 -1 -1; -1 K -1; -1 -1 -1];
   jmg = MyStretch(img,jmg);
   
   HSI = rgb2hsi(jmg);
-  GRY = HSI(:,:,3);
+  GRY = HSI(:, :, 3);
   
   MKF_ = imfilter(GRY, H, 'same');
   MKF = zeros(size(MKF_));
-  MKF(2:end-1,2:end-1) = MKF_(2:end-1,2:end-1);
+  MKF(2:end-1, 2:end-1) = MKF_(2:end-1, 2:end-1);
   
   kL = 0;
   kH = 2;
@@ -37,11 +37,11 @@ function [kmg,ovr,k] = AUMS_GRAY(img, jmg)
   rho = 0.5*(sqrt(5)-1);
   tol = 0.01;
   
-  k(1) = kL + (1-rho)*rng;
+  k(1) = kL + (1 - rho)*rng;
   k(2) = kL + rho*rng;
 
-  [ENH(:,:,1), ent(1), ovr(1)] = MyGolden(k(1), GRY, MKF, img);
-  [ENH(:,:,2), ent(2), ovr(2)] = MyGolden(k(2), GRY, MKF, img);
+  [ENH(:, :, 1), ent(1), ovr(1)] = MyGolden(k(1), GRY, MKF, img);
+  [ENH(:, :, 2), ent(2), ovr(2)] = MyGolden(k(2), GRY, MKF, img);
   
   while rng > tol,
     k_ = k;
@@ -64,7 +64,7 @@ function [kmg,ovr,k] = AUMS_GRAY(img, jmg)
   end;
   ovr = mean(ovr_);
   k = mean(k_);
-  HSI(:,:,3) = ENH;
+  HSI(:, :, 3) = ENH;
   kmg = hsi2rgb(HSI);
   kmg = uint8(kmg*img.L);
 end
@@ -95,11 +95,10 @@ end
 function [RGB] = MyStretch(img, RGB)
   RGB = double(RGB)/img.L;
   for k=1:size(RGB, 3),
-    mi = min(min(RGB(:,:,k)));
-    RGB(:,:,k) = RGB(:,:,k) - mi;
-    
-    mx = max(max(RGB(:,:,k)));
-    RGB(:,:,k) = RGB(:,:,k)/mx;
+    mi = min(min(RGB(:, :, k)));
+    RGB(:, :, k) = RGB(:, :, k) - mi;
+    mx = max(max(RGB(:, :, k)));
+    RGB(:, :, k) = RGB(:, :, k)/mx;
   end;
   RGB = uint8(RGB*img.L);
 end
@@ -175,13 +174,13 @@ function rgb = hsi2rgb(hsi)
   G = zeros(size(hsi, 1), size(hsi, 2));
   B = zeros(size(hsi, 1), size(hsi, 2));
   % RG sector (0 <= H < 2*pi/3).
-  idx = find( (0 <= H) & (H < 2*pi/3));
+  idx = find((0 <= H) & (H < 2*pi/3));
   B(idx) = I(idx) .* (1 - S(idx));
   R(idx) = I(idx) .* (1 + S(idx) .* cos(H(idx)) ./ ...
                                             cos(pi/3 - H(idx)));
   G(idx) = 3*I(idx) - (R(idx) + B(idx));
   % BG sector (2*pi/3 <= H < 4*pi/3).
-  idx = find( (2*pi/3 <= H) & (H < 4*pi/3) );
+  idx = find((2*pi/3 <= H) & (H < 4*pi/3) );
   R(idx) = I(idx) .* (1 - S(idx));
   G(idx) = I(idx) .* (1 + S(idx) .* cos(H(idx) - 2*pi/3) ./ ...
                       cos(pi - H(idx)));
@@ -189,8 +188,7 @@ function rgb = hsi2rgb(hsi)
   % BR sector.
   idx = find((4*pi/3 <= H) & (H <= 2*pi));
   G(idx) = I(idx) .* (1 - S(idx));
-  B(idx) = I(idx) .* (1 + S(idx) .* cos(H(idx) - 4*pi/3) ./ ...
-                                             cos(5*pi/3 - H(idx)));
+  B(idx) = I(idx) .* (1 + S(idx) .* cos(H(idx) - 4*pi/3) ./ cos(5*pi/3 - H(idx)));
   R(idx) = 3*I(idx) - (G(idx) + B(idx));
   % Combine all three results into an RGB image.  Clip to [0, 1] to
   % compensate for floating-point arithmetic rounding effects.
@@ -212,8 +210,10 @@ if index > 0,
   plotImg(fig(end), img.RGB, filename, job);
   
   job += 1;
-  
-  [imgTanhF, ovr, k] = AUMS_GRAY(img,  img.RGB);
-  fig(end+1) = getFig();
-  plotImg(fig(end), imgTanhF, filename, job);
+  for K=1:11
+    [imgTanhF, ovr, k] = AUMS_GRAY(img, img.RGB, K);
+    sum(imgTanhF(:)(:)(:))/size(imgTanhF(:)(:)(:), 1)
+    fig(end+1) = getFig();
+    plotImg(fig(end), imgTanhF, filename, job);
+  end
 end;
