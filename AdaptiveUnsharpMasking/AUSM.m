@@ -1,8 +1,3 @@
-% Paper: S.C.F. Lin, C.Y. Wong, G. Jiang, M.A. Rahman, T.R. Ren, Ngaiming Kwok,
-% Haiyan Shib, Ying-Hao Yuc, Tonghai Wu, "Intensity and edge based adaptive
-% unsharp masking filter for colorimage enhancement," Optik 127 (2016)
-% 407?414
-
 clc;
 clear all;
 close all;
@@ -77,7 +72,7 @@ function rgb = hsi2rgb(hsi)
 end
 
 
-function [RGB] = MyStretch(img, RGB)
+function [RGB] = stretch(img, RGB)
   % Normalize image
   RGB = double(RGB)/img.L;
   for k=1:size(RGB, 3),
@@ -90,19 +85,37 @@ function [RGB] = MyStretch(img, RGB)
 end
 
 
-function [huv, ent, ovr] = MyGolden(k, guv, duv, img)
+function [huv, ovr] = restore(huv, guv, img)
+  z0 = find(huv < 0);
+  z1 = find(huv > 1);
+  
+  huv(z0) = guv(z0);
+  huv(z1) = guv(z1);
+  
+  ovr = (length(z0) + length(z1))/img.N;
+end
+
+
+function [huv, huv_entropy, over_range_pixeles] = golden(k, guv, duv, img)
   lambda_guv = 0.5*(1 + tanh(3 - 12*abs(guv - 0.5)));
   lambda_duv = 0.5*(1 + tanh(3 - (6*abs(duv) - 0.5)));
   lambda_uv = lambda_guv.*lambda_duv;
   huv = guv + k*lambda_uv.*duv;
-  [huv, ovr] = MyRestore(huv, guv, img);
-  ent = entropy(huv(2:end-1, 2:end-1))*(1 - ovr);
+  [huv, over_range_pixeles] = restore(huv, guv, img);
+  huv_entropy = entropy(huv(2:end-1, 2:end-1))*(1 - over_range_pixeles);
 end
 
-
-function [kmg, ovr, k] = AUMS_GRAY(img, jmg, K=8)
-  H = [-1 -1 -1; -1 K -1; -1 -1 -1];
-  jmg = MyStretch(img, jmg);
+#{
+img - struct with the image information (h:height, w:width, RGB:resized rgb img, JPG:read jgp image, N:hxw)
+jmg - rgb image
+K - center value of the filter
+kMin - Minimun gain
+kMax - Maximun gain
+tol - Solution tolerance
+#}
+function [kmg, ovr, k] = AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01)
+  H = 0.125*[-1 -1 -1; -1 K -1; -1 -1 -1];
+  jmg = stretch(img, jmg);
   
   HSI = rgb2hsi(jmg);
   guv = HSI(:, :, 3);
@@ -111,35 +124,32 @@ function [kmg, ovr, k] = AUMS_GRAY(img, jmg, K=8)
   duv = zeros(size(filteredImage));
   duv(2:end-1, 2:end-1) = filteredImage(2:end-1, 2:end-1);
   
-  kL = 0;
-  kH = 2;
-  rng = kH-kL;
-  rho = 0.5*(sqrt(5)-1);
-  tol = 0.01;
+  rng = kMax - kMin;
+  gsr = 0.5*(sqrt(5) - 1);
   
-  k(1) = kL + (1 - rho)*rng;
-  k(2) = kL + rho*rng;
+  k(1) = kMin + (1 - gsr)*rng;
+  k(2) = kMin + gsr*rng;
 
-  [ENH(:, :, 1), ent(1), ovr(1)] = MyGolden(k(1), guv, duv, img);
-  [ENH(:, :, 2), ent(2), ovr(2)] = MyGolden(k(2), gub, duv, img);
+  [ENH(:, :, 1), ent(1), ovr(1)] = golden(k(1), guv, duv, img);
+  [ENH(:, :, 2), ent(2), ovr(2)] = golden(k(2), guv, duv, img);
   
   while rng > tol,
     k_ = k;
     ovr_ = ovr;
     if ent(1) > ent(2),
-      kH = k(2);
-      rng = kH - kL;
-      k(1) = kL + (1-rho)*rng;
-      k(2) = kL + rho*rng;
+      kMax = k(2);
+      rng = kMax - kMin;
+      k(1) = kMin + (1-gsr)*rng;
+      k(2) = kMin + gsr*rng;
       ent(2) = ent(1);
-      [ENH, ent(1), ovr(1)] = MyGolden(k(1), GRY, MKF, img);
+      [ENH, ent(1), ovr(1)] = golden(k(1), guv, duv, img);
     else
-      kL = k(1);
-      rng = kH - kL;
-      k(1) = kL + (1-rho)*rng;
-      k(2) = kL + rho*rng;
+      kMin = k(1);
+      rng = kMax - kMin;
+      k(1) = kMin + (1-gsr)*rng;
+      k(2) = kMin + gsr*rng;
       ent(1) = ent(2);
-      [ENH, ent(2), ovr(2)] = MyGolden(k(2), GRY, MKF, img);
+      [ENH, ent(2), ovr(2)] = golden(k(2), guv, duv, img);
     end;
   end;
   ovr = mean(ovr_);
@@ -147,17 +157,6 @@ function [kmg, ovr, k] = AUMS_GRAY(img, jmg, K=8)
   HSI(:, :, 3) = ENH;
   kmg = hsi2rgb(HSI);
   kmg = uint8(kmg*img.L);
-end
-
-
-function [ENH, ovr] = MyRestore(ENH, GRY, img)
-  z0 = find(ENH < 0);
-  z1 = find(ENH > 1);
-  
-  ENH(z0) = GRY(z0);
-  ENH(z1) = GRY(z1);
-  
-  ovr = (length(z0) + length(z1))/img.N;
 end
 
 
@@ -207,10 +206,19 @@ if index > 0,
   fig(end + 1) = getFig();
   plotImg(fig(end), img.RGB, filename, job);
   
-  job += 1;
-  for K=1:11
-    [imgTanhF, ovr, k] = AUMS_GRAY(img, img.RGB, K);
-    fig(end+1) = getFig();
-    plotImg(fig(end), imgTanhF, filename, job);
+  for K=3:2:17
+    for kMax=0:9
+      for kMin=0:kMax-1
+        for tol=0.001:0.005:0.1
+          job += 1;
+          [ausmImg, ovr, k] = AUSM_GRAY(img, img.RGB, K, kMin, kMax, tol);
+          f = strsplit(filename, '.')(1);
+          name = strcat(f, '_K=', num2str(K), '_kMin=', num2str(kMin), '_kMax=',
+                        num2str(kMax), '_tol=', num2str(int8(tol)), '.png')
+          imwrite(ausmImg, strcat(num2str(job), '.png'));
+          #plotImg(fig(end), ausmImg, filename, job);
+        end
+      end
+    end
   end
 end;
