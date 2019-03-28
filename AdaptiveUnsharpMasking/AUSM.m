@@ -132,6 +132,8 @@ function [kmg, ovr, k] = AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01)
 
   [ENH(:, :, 1), ent(1), ovr(1)] = golden(k(1), guv, duv, img);
   [ENH(:, :, 2), ent(2), ovr(2)] = golden(k(2), guv, duv, img);
+  k_ = k;
+  ovr_ = ovr;
   
   while rng > tol,
     k_ = k;
@@ -200,22 +202,26 @@ end
 if index > 0,
   loadedImg = double(imread([path filename]));
   loadedImg *= img.L/max(loadedImg(:)(:)(:));
+  filter = fspecial("gaussian", [3 3], 0.5);
+  loadedImg = imfilter(loadedImg, filter, 'same');
   img.JPG = cat(3, loadedImg, loadedImg, loadedImg);
   
   [img, img.RGB] = resizeImg(img, img.JPG);
   fig(end + 1) = getFig();
   plotImg(fig(end), img.RGB, filename, job);
+  entropy_original = entropy(img.RGB);
   
-  for K=3:2:17
-    for kMax=0:9
-      for kMin=0:kMax-1
-        for tol=0.001:0.005:0.1
+  for K=[4 8 12 16 24]
+    for kMax=[2, 4, 6]
+      for kMin=[0, 0.25, 0.5, 0.75]
+        for tol=[0.01 0.005 0.001 0.0005 0.0001]
           job += 1;
-          [ausmImg, ovr, k] = AUSM_GRAY(img, img.RGB, K, kMin, kMax, tol);
+          [ausmImg, ovr, k] = AUSM_GRAY(img, img.RGB, K, kMax*kMin, kMax, tol);
           f = strsplit(filename, '.')(1);
-          name = strcat(f, '_K=', num2str(K), '_kMin=', num2str(kMin), '_kMax=',
-                        num2str(kMax), '_tol=', num2str(int8(tol)), '.png')
-          imwrite(ausmImg, strcat(num2str(job), '.png'));
+          printf('job=%d K=%d kMin=%d kMax=%d tol=%f entAUSM=%f entOrig=%f entDelta=%f\n',
+                 job, K, kMax*kMin, kMax, tol, entropy(ausmImg), entropy_original,
+                 entropy_original - entropy(ausmImg));
+          imwrite(ausmImg, strcat('normal_filter/', num2str(job), '.png'));
           #plotImg(fig(end), ausmImg, filename, job);
         end
       end
