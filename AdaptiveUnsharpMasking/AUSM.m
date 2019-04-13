@@ -114,7 +114,7 @@ kMax - Maximun gain
 tol - Solution tolerance
 #}
 function [kmg, ovr, k] = AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01)
-  H = 0.125*[-1 -1 -1; -1 K -1; -1 -1 -1];
+  H = (0.125)*[-1 -1 -1; -1 4 -1; -1 -1 -1];
   jmg = stretch(img, jmg);
   
   HSI = rgb2hsi(jmg);
@@ -209,22 +209,9 @@ if index > 0,
   [img, img.RGB] = resizeImg(img, img.JPG);
   fig(end + 1) = getFig();
   plotImg(fig(end), img.RGB, filename, job);
-  entropy_original = entropy(img.RGB);
   
-  for K=[4 8 12 16 24]
-    for kMax=[2, 4, 6]
-      for kMin=[0, 0.25, 0.5, 0.75]
-        for tol=[0.01 0.005 0.001 0.0005 0.0001]
-          job += 1;
-          [ausmImg, ovr, k] = AUSM_GRAY(img, img.RGB, K, kMax*kMin, kMax, tol);
-          f = strsplit(filename, '.')(1);
-          printf('job=%d K=%d kMin=%d kMax=%d tol=%f entAUSM=%f entOrig=%f entDelta=%f\n',
-                 job, K, kMax*kMin, kMax, tol, entropy(ausmImg), entropy_original,
-                 entropy_original - entropy(ausmImg));
-          imwrite(ausmImg, strcat('normal_filter/', num2str(job), '.png'));
-          #plotImg(fig(end), ausmImg, filename, job);
-        end
-      end
-    end
-  end
+  [ausmImg, ovr, k] = AUSM_GRAY(img, img.RGB, 0, 1, 0.01);
+  f = strsplit(filename, '.')(1);
+  imwrite(ausmImg, strcat('filtered1/', num2str(job), '.png'));
+  #plotImg(fig(end), ausmImg, filename, job);
 end;
