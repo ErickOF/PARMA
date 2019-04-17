@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import stats
 
 
 HEIGHT, WIDTH = 360, 480
@@ -77,13 +78,22 @@ def stretch(img):
     return img
 
 def restore(huv, guv, img):
-  z0 = huv < 0;
-  z1 = huv > 1;
+  z0 = huv < 0
+  z1 = huv > 1
   
-  huv(z0) = guv(z0);
-  huv(z1) = guv(z1);
+  huv(z0) = guv(z0)
+  huv(z1) = guv(z1)
   
-  ovr = (z0.size + z1.size)/img.size;
+  ovr = (z0.size + z1.size)/img.size
   return huv, ovr
+
+def golden(k, guv, duv, img):
+  lambda_guv = 0.5*(1 + tanh(3 - 12(guv - 0.5).abs()))
+  lambda_duv = 0.5*(1 + tanh(3 - (6*(duv) - 0.5).abs()))
+  lambda_uv = lambda_guv*lambda_duv
+  huv = guv + k*lambda_uv*duv
+  huv, over_range_pixeles = restore(huv, guv, img)
+  huv_entropy = stats.entropy(huv[2:end-1, 2:end-1]).mean()*(1 - over_range_pixeles)
+  return huv, huv_entropy, over_range_pixeles
 
 
