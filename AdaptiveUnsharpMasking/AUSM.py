@@ -65,12 +65,25 @@ def hsi2rgb(hsi):
     return rgb
 
 def stretch(img):
+    # Normalize image
     img /= MAX_PIXEL_VALUE
-    for k in range(0, img.shape[2]):
-        mi = np.min(np.minimum(img[:,:,k]))
-        img[:,:,k] -= mi
-        mi = np.min(np.maximum(img[:,:,k]))
-        img[:,:,k] /= mi
-        img *= MAX_PIXEL_VALUE
+    for k in range(3):
+        min_value = img[:,:,k].min()
+        max_value = img[:,:,k].max()
+        
+        img[:,:,k] -= min_value
+        img[:,:,k] /= max_value
+    img *= MAX_PIXEL_VALUE
     return img
+
+def restore(huv, guv, img):
+  z0 = huv < 0;
+  z1 = huv > 1;
+  
+  huv(z0) = guv(z0);
+  huv(z1) = guv(z1);
+  
+  ovr = (z0.size + z1.size)/img.size;
+  return huv, ovr
+
 
