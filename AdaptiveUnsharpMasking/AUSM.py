@@ -88,8 +88,8 @@ def restore(huv, guv):
   return huv, ovr
 
 def golden(k, guv, duv):
-  lambda_guv = 0.5*(1 + tanh(3 - 12(guv - 0.5).abs()))
-  lambda_duv = 0.5*(1 + tanh(3 - (6*(duv) - 0.5).abs()))
+  lambda_guv = 0.5*(1 + np.tanh(3 - 12(guv - 0.5).abs()))
+  lambda_duv = 0.5*(1 + np.tanh(3 - (6*(duv) - 0.5).abs()))
   lambda_uv = lambda_guv*lambda_duv
   huv = guv + k*lambda_uv*duv
   huv, over_range_pixeles = restore(huv, guv)
