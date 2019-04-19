@@ -77,12 +77,12 @@ def stretch(img):
     img *= MAX_PIXEL_VALUE
     return img
 
-def restore(huv, guv, img):
+def restore(huv, guv):
   z0 = huv < 0
   z1 = huv > 1
   
-  huv(z0) = guv(z0)
-  huv(z1) = guv(z1)
+  huv[z0] = guv[z0]
+  huv[z1] = guv[z1]
   
   ovr = (z0.size + z1.size)/huv.size
   return huv, ovr
