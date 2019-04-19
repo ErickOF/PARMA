@@ -84,20 +84,19 @@ def restore(huv, guv, img):
   huv(z0) = guv(z0)
   huv(z1) = guv(z1)
   
-  ovr = (z0.size + z1.size)/img.size
+  ovr = (z0.size + z1.size)/huv.size
   return huv, ovr
 
-def golden(k, guv, duv, img):
+def golden(k, guv, duv):
   lambda_guv = 0.5*(1 + tanh(3 - 12(guv - 0.5).abs()))
   lambda_duv = 0.5*(1 + tanh(3 - (6*(duv) - 0.5).abs()))
   lambda_uv = lambda_guv*lambda_duv
   huv = guv + k*lambda_uv*duv
-  huv, over_range_pixeles = restore(huv, guv, img)
+  huv, over_range_pixeles = restore(huv, guv)
   huv_entropy = stats.entropy(huv[2:-1, 2:-1]).mean()*(1 - over_range_pixeles)
   return huv, huv_entropy, over_range_pixeles
 
 """
-img - struct with the image information (h:height, w:width, RGB:resized rgb img, JPG:read jgp image, N:hxw)
 jmg - rgb image
 K - center value of the filter
 kMin - Minimun gain
@@ -106,7 +105,7 @@ tol - Solution tolerance
 """
 def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
     H = (0.125)*np.array([[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]])
-    jmg = stretch(img, jmg)
+    jmg = stretch(jmg)
     
     HSI = rgb2hsi(jmg)
     guv = HSI[:, :, 2]
@@ -124,8 +123,8 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
     ent = np.zeros(2)
     ovr = np.zeros(2)
 
-    ENH[:, :, 0], ent[0], ovr[0] = golden(k[0], guv, duv, img)
-    ENH[:, :, 1], ent[1], ovr[1] = golden(k[1], guv, duv, img)
+    ENH[:, :, 0], ent[0], ovr[0] = golden(k[0], guv, duv)
+    ENH[:, :, 1], ent[1], ovr[1] = golden(k[1], guv, duv)
     k_ = k;
     ovr_ = ovr;
   
@@ -138,14 +137,14 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
             k[0] = kMin + (1 - gsr)*rng
             k[1] = kMin + gsr*rng
             ent[1] = ent[0]
-            ENH, ent[0], ovr[0] = golden(k[0], guv, duv, img)
+            ENH, ent[0], ovr[0] = golden(k[0], guv, duv)
         else:
             kMin = k[0]
             rng = kMax - kMin
             k[0] = kMin + (1 - gsr)*rng
             k[1] = kMin + gsr*rng
             ent[0] = ent[1]
-            ENH, ent[1], ovr[1] = golden(k[1], guv, duv, img)
+            ENH, ent[1], ovr[1] = golden(k[1], guv, duv)
     ovr = ovr_.mean()
     k = k_.mean()
     HSI[:, :, 2] = ENH
