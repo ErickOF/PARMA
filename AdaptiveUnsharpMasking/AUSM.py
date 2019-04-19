@@ -46,19 +46,19 @@ def hsi2rgb(hsi):
     B = np.zeros(dimensions)
     # RG sector (0 <= H < 2*pi/3).
     idx = (0 <= H) & (H < 2*np.pi/3)
-    B(idx) = I(idx) * (1 - S(idx))
-    R(idx) = I(idx) * (1 + S(idx) * cos(H(idx)) / cos(pi/3 - H(idx)))
-    G(idx) = 3*I(idx) - (R(idx) + B(idx))
+    B[idx] = I[idx]*(1 - S[idx])
+    R[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx])/np.cos(np.pi/3 - H[idx]))
+    G[idx] = 3*I[idx] - (R[idx] + B[idx])
     # BG sector (2*pi/3 <= H < 4*pi/3).
     idx = (2*pi/3 <= H) & (H < 4*np.pi/3)
-    R(idx) = I(idx) * (1 - S(idx))
-    G(idx) = I(idx) * (1 + S(idx) * cos(H(idx) - 2*pi/3) / cos(pi - H(idx)))
-    B(idx) = 3*I(idx) - (R(idx) + G(idx))
+    R[idx] = I[idx]*(1 - S[idx])
+    G[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx] - 2*np.pi/3)/np.cos(np.pi - H[idx]))
+    B[idx] = 3*I[idx] - (R[idx] + G[idx])
     # BR sector.
-    idx = (4*pi/3 <= H) & (H <= 2*pi)
-    G(idx) = I(idx) * (1 - S(idx))
-    B(idx) = I(idx) * (1 + S(idx) * cos(H(idx) - 4*pi/3) / cos(5*pi/3 - H(idx)))
-    R(idx) = 3*I(idx) - (G(idx) + B(idx))
+    idx = (4*np.pi/3 <= H) & (H <= 2*np.pi)
+    G[idx] = I[idx]*(1 - S[idx])
+    B[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx] - 4*np.pi/3)/np.cos(5*np.pi/3 - H[idx]))
+    R[idx] = 3*I[idx] - (G[idx] + B[idx])
     # Combine all three results into an RGB image.  Clip to [0, 1] to
     # compensate for floating-point arithmetic rounding effects.
     rgb = np.dstack((R, G, B));
@@ -162,3 +162,6 @@ def resizeImg(jmg):
     jmg = misc.imresize(jmg, k, 'bilinear')
 
     return jmg
+
+if __name__ == "main":
+    print("Ready")
