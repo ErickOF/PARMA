@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import ndimage, stats
+from scipy import misc, ndimage, stats
 
 
 HEIGHT, WIDTH = 360, 480
@@ -125,8 +125,8 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
 
     ENH[:, :, 0], ent[0], ovr[0] = golden(k[0], guv, duv)
     ENH[:, :, 1], ent[1], ovr[1] = golden(k[1], guv, duv)
-    k_ = k;
-    ovr_ = ovr;
+    k_ = k
+    ovr_ = ovr
   
     while rng > tol:
         k_ = k
@@ -152,3 +152,13 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
     kmg = np.uint8(kmg*img.L)
     
     return kmg, ovr, k
+
+def resizeImg(jmg):
+    v, u, w = size(jmg).shape
+    if u > v:
+        k = [HEIGHT, WIDTH]
+    else:
+        k = [WIDTH, HEIGHT]
+    jmg = misc.imresize(jmg, k, 'bilinear')
+
+    return jmg
