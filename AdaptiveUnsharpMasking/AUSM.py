@@ -213,8 +213,6 @@ if __name__ == '__main__':
         RGB = resize_img(JPG)
       
         ausm, ovr, k = AUSM_GRAY(RGB, 0, 2, 0.01)
-        #f = strsplit(filename, '.')(1)
-        #imwrite(ausmImg, strcat('filtered1/', num2str(job), '.png'))
         
         filename = path.split('\\')[-1].replace('.', '_ausm.')
         new_name = join(SAVE_DIR, filename)
