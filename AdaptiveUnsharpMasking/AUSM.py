@@ -188,4 +188,9 @@ def fspecial_gaussian(size, sigma):
     x, y = np.mgrid[-size//2 + 1:size//2 + 1, -size//2 + 1:size//2 + 1]
     g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
     return g/g.sum()
-        
+
+def plot_img(img, ausm):
+    plt.subplot(221)
+    plt.imshow(img, cmap='gray')
+    plt.subplot(222)
+    plt.imshow(ausm[:,:,0], cmap='gray')
