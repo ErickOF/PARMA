@@ -154,7 +154,7 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
     return kmg, ovr, k
 
 def resizeImg(jmg):
-    v, u, w = size(jmg).shape
+    v, u, w = jmg.shape
     if u > v:
         k = [HEIGHT, WIDTH]
     else:
@@ -162,6 +162,3 @@ def resizeImg(jmg):
     jmg = misc.imresize(jmg, k, 'bilinear')
 
     return jmg
-
-if __name__ == "main":
-    print("Ready")
