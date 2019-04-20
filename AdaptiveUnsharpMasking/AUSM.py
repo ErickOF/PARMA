@@ -7,6 +7,7 @@ from os.path import isfile, join
 from scipy import misc, ndimage, stats
 
 
+DATASET_DIR = 'imgs'
 HEIGHT, WIDTH = 360, 480
 MAX_PIXEL_VALUE = 255
 
@@ -168,8 +169,13 @@ def resize_img(jmg):
 
     return jmg
 
-def load_images(imgs_dir):
+def load_imgs(imgs_dir):
     filenames = [join(imgs_dir, file) for file in listdir(imgs_dir) \
                                      if isfile(join(imgs_dir, file))]
     imgs = [ndimage.imread(img) for img in filenames]
     return imgs
+
+def fspecial(size, sigma):
+    x, y = np.mgrid[-size//2 + 1:size//2 + 1, -size//2 + 1:size//2 + 1]
+    g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
+    return g/g.sum()
