@@ -9,8 +9,12 @@ from scipy import misc, ndimage, stats
 
 
 # Change this for your folders
-DATASET_DIR = 'cells\cells_test\images'
-SAVE_DIR = 'imgs'
+MAINDIR = '..\..\..\dataset'
+LOAD_DIR = 'cells'
+DIR = 'cells_test\images'
+#DIR = 'cells_train\images'
+#DIR = 'cells_validation\images'
+SAVE_DIR = 'cells_ausm2'
 
 HEIGHT, WIDTH = 360, 480
 MAX_PIXEL_VALUE = 255
@@ -39,6 +43,7 @@ def rgb2hsi(img):
     I = (R + G + B) / 3
     # Combine all three results into an hsi image.
     HSI = np.dstack((H, S, I))
+    
     return HSI
 
 def hsi2rgb(hsi):
@@ -72,6 +77,7 @@ def hsi2rgb(hsi):
     # Combine all three results into an RGB image.  Clip to [0, 1] to
     # compensate for floating-point arithmetic rounding effects.
     rgb = np.dstack((R, G, B))
+    #rgb = np.maximum(np.minimum(RGB, 1), 0)
     
     return rgb
 
@@ -118,11 +124,11 @@ kMin - Minimun gain
 kMax - Maximun gain
 tol - Solution tolerance
 """
-def AUSM_GRAY(jmg, K=8, kMin=0, kMax=2, tol=0.01):
+def AUSM_GRAY(jmg, kMin=0, kMax=2, tol=0.01):
     H = (0.125)*np.array([[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]])
     jmg = stretch(jmg)
     
-    HSI = rgb2hsi(jmg)
+    HSI = rgb2hsi(jmg)/MAX_PIXEL_VALUE
     guv = HSI[:, :, 2]
     
     filteredImage = ndimage.correlate(guv, H, mode='constant')
@@ -164,7 +170,7 @@ def AUSM_GRAY(jmg, K=8, kMin=0, kMax=2, tol=0.01):
     k = k_.mean()
     HSI[:, :, 2] = ENH[:, :, 0]
     kmg = hsi2rgb(HSI)
-    kmg = kmg*jmg.size
+    kmg = np.uint8(kmg*MAX_PIXEL_VALUE)
     
     return kmg, ovr, k
 
@@ -200,22 +206,28 @@ def save_img(img, name):
 
 
 if __name__ == '__main__':
-    imgs, paths = load_imgs(DATASET_DIR)
-    
+    imgs, paths = load_imgs(join(join(MAINDIR, LOAD_DIR), DIR))
+    save_dir = join(join(MAINDIR, SAVE_DIR), DIR)
     for img, path in zip(imgs, paths):
-        MAX_PIXEL_VALUE_IMG = img.max();
-        img = img * MAX_PIXEL_VALUE/MAX_PIXEL_VALUE_IMG
+        MAX_PIXEL_VALUE_IMG = img.max()
+        _img = img * MAX_PIXEL_VALUE/MAX_PIXEL_VALUE_IMG
         # Filter
         F = fspecial_gaussian(3, 0.5)
-        filtered_img = ndimage.correlate(img, F, mode='constant')
+        filtered_img = ndimage.correlate(_img, F, mode='constant')
         JPG = np.dstack((filtered_img, filtered_img, filtered_img))
-      
-        RGB = resize_img(JPG)
-      
-        ausm, ovr, k = AUSM_GRAY(RGB, 0, 2, 0.01)
         
-        filename = path.split('\\')[-1].replace('.', '_ausm.')
-        new_name = join(SAVE_DIR, filename)
-        save_img(MAX_PIXEL_VALUE_IMG*ausm[:, :, 0]/MAX_PIXEL_VALUE, new_name)
+        # Params 1
+        ausm, ovr, k = AUSM_GRAY(JPG, 0, 1, 0.01)
+        # Params 2
+        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 2, 0.01)
+        # Params 3
+        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 4, 0.01)
+        # Params 4
+        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 1, 0.01)
+        # Params 4
+        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 1, 0.01)
         
-        #plot_img(img, ausm)
+        filename = path.split('\\')[-1]
+        new_name = join(save_dir, filename)
+        img_to_save = np.uint8(MAX_PIXEL_VALUE_IMG*ausm[:,:,0]/MAX_PIXEL_VALUE)
+        save_img(img_to_save, new_name)
