@@ -10,6 +10,8 @@ from scipy import misc, ndimage, stats
 
 
 DATASET_DIR = 'imgs'
+SAVE_DIR = 'imgs'
+
 HEIGHT, WIDTH = 360, 480
 MAX_PIXEL_VALUE = 255
 
@@ -40,7 +42,6 @@ def rgb2hsi(img):
     return HSI
 
 def hsi2rgb(hsi):
-    print(hsi.shape)
     """
     Converts an HSI image to RGB.
     """
@@ -55,7 +56,6 @@ def hsi2rgb(hsi):
     B = np.zeros(dimensions)
     # RG sector (0 <= H < 2*pi/3).
     idx = (0 <= H) & (H < 2*np.pi/3)
-    print(idx.shape)
     B[idx] = I[idx]*(1 - S[idx])
     R[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx])/np.cos(np.pi/3 - H[idx]))
     G[idx] = 3*I[idx] - (R[idx] + B[idx])
@@ -178,19 +178,22 @@ def resize_img(img):
 
     return img
 
-def load_imgs(imgs_dir):
-    filenames = [join(imgs_dir, file) for file in listdir(imgs_dir) \
-                                     if isfile(join(imgs_dir, file))]
-    imgs = [ndimage.imread(img, 'L') for img in filenames]
-    return imgs
-
 def fspecial_gaussian(size, sigma):
     x, y = np.mgrid[-size//2 + 1:size//2 + 1, -size//2 + 1:size//2 + 1]
     g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
     return g/g.sum()
+
+def load_imgs(imgs_dir):
+    filenames = [join(imgs_dir, file) for file in listdir(imgs_dir) \
+                                     if isfile(join(imgs_dir, file))]
+    imgs = [ndimage.imread(img, 'L') for img in filenames]
+    return imgs, filenames
 
 def plot_img(img, ausm):
     plt.subplot(221)
     plt.imshow(img, cmap='gray')
     plt.subplot(222)
     plt.imshow(ausm[:,:,0], cmap='gray')
+
+def save_img(img, name):
+    misc.imsave(name, img)
