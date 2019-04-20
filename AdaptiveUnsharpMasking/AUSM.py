@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 import numpy as np
 
 import os
@@ -22,7 +24,7 @@ def rgb2hsi(img):
     B = img[:, :, 2]
     # Implement the conversion equations
     num = 0.5*((R-G) + (R-B))
-    den = (((R-G)**2 + (R-G)**2)*(G-B)).sqrt()
+    den = np.sqrt(((R-G)**2 + (R-G)**2)*(G-B))
     theta = np.arccos(num/(den + np.spacing(1)))
     H = theta.copy()
     H[B>G] = 2*np.pi - H[B>G]
@@ -38,6 +40,7 @@ def rgb2hsi(img):
     return HSI
 
 def hsi2rgb(hsi):
+    print(hsi.shape)
     """
     Converts an HSI image to RGB.
     """
@@ -46,17 +49,18 @@ def hsi2rgb(hsi):
     S = hsi[:, :, 1]
     I = hsi[:, :, 2]
     # Implement the conversion equations.
-    dimensions = hsi.shape
+    dimensions = H.shape
     R = np.zeros(dimensions)
     G = np.zeros(dimensions)
     B = np.zeros(dimensions)
     # RG sector (0 <= H < 2*pi/3).
     idx = (0 <= H) & (H < 2*np.pi/3)
+    print(idx.shape)
     B[idx] = I[idx]*(1 - S[idx])
     R[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx])/np.cos(np.pi/3 - H[idx]))
     G[idx] = 3*I[idx] - (R[idx] + B[idx])
     # BG sector (2*pi/3 <= H < 4*pi/3).
-    idx = (2*np.pi/3 <= H) & (H < 4*np.np.pi/3)
+    idx = (2*np.pi/3 <= H) & (H < 4*np.pi/3)
     R[idx] = I[idx]*(1 - S[idx])
     G[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx] - 2*np.pi/3)/np.cos(np.pi - H[idx]))
     B[idx] = 3*I[idx] - (R[idx] + G[idx])
@@ -68,39 +72,44 @@ def hsi2rgb(hsi):
     # Combine all three results into an RGB image.  Clip to [0, 1] to
     # compensate for floating-point arithmetic rounding effects.
     rgb = np.dstack((R, G, B))
-    rgb = rgb.min(1).max(0)
+    
     return rgb
 
 def stretch(img):
     # Normalize image
-    img /= MAX_PIXEL_VALUE
+    img = img / MAX_PIXEL_VALUE
     for k in range(3):
-        min_value = img[:,:,k].min()
-        max_value = img[:,:,k].max()
+        min_value = img[:, :, k].min()
+        max_value = img[:, :, k].max()
         
-        img[:,:,k] -= min_value
-        img[:,:,k] /= max_value
-    img *= MAX_PIXEL_VALUE
+        img[:, :, k] -= min_value
+        img[:, :, k] /= max_value
+        
+    img = img * MAX_PIXEL_VALUE
+    
     return img
 
 def restore(huv, guv):
-  z0 = huv < 0
-  z1 = huv > 1
-  
-  huv[z0] = guv[z0]
-  huv[z1] = guv[z1]
-  
-  ovr = (z0.size + z1.size)/huv.size
-  return huv, ovr
+    z0 = huv < 0
+    z1 = huv > 1
+    
+    huv[z0] = guv[z0]
+    huv[z1] = guv[z1]
+    
+    ovr = (z0.size + z1.size)/huv.size
+    
+    return huv, ovr
 
 def golden(k, guv, duv):
-  lambda_guv = 0.5*(1 + np.tanh(3 - 12(guv - 0.5).abs()))
-  lambda_duv = 0.5*(1 + np.tanh(3 - (6*(duv) - 0.5).abs()))
-  lambda_uv = lambda_guv*lambda_duv
-  huv = guv + k*lambda_uv*duv
-  huv, over_range_pixeles = restore(huv, guv)
-  huv_entropy = stats.entropy(huv[2:-1, 2:-1]).mean()*(1 - over_range_pixeles)
-  return huv, huv_entropy, over_range_pixeles
+    lambda_guv = 0.5*(1 + np.tanh(3 - 12*np.abs(guv - 0.5)))
+    lambda_duv = 0.5*(1 + np.tanh(3 - np.abs(6*(duv) - 0.5)))
+    lambda_uv = lambda_guv*lambda_duv
+    
+    huv = guv + k*lambda_uv*duv
+    huv, over_range_pixeles = restore(huv, guv)
+    huv_entropy = stats.entropy(huv[2:-1, 2:-1]).mean()*(1 - over_range_pixeles)
+    
+    return huv, huv_entropy, over_range_pixeles
 
 """
 jmg - rgb image
@@ -109,14 +118,14 @@ kMin - Minimun gain
 kMax - Maximun gain
 tol - Solution tolerance
 """
-def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
+def AUSM_GRAY(jmg, K=8, kMin=0, kMax=2, tol=0.01):
     H = (0.125)*np.array([[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]])
     jmg = stretch(jmg)
     
     HSI = rgb2hsi(jmg)
     guv = HSI[:, :, 2]
     
-    filteredImage = ndimage.correlate(guv, H, mode='constant').transpose()
+    filteredImage = ndimage.correlate(guv, H, mode='constant')
     duv = np.zeros(filteredImage.shape)
     duv[1:-1, 1:-1] = filteredImage[1:-1, 1:-1]
     
@@ -143,39 +152,40 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
             k[0] = kMin + (1 - gsr)*rng
             k[1] = kMin + gsr*rng
             ent[1] = ent[0]
-            ENH, ent[0], ovr[0] = golden(k[0], guv, duv)
+            ENH[:, :, 0], ent[0], ovr[0] = golden(k[0], guv, duv)
         else:
             kMin = k[0]
             rng = kMax - kMin
             k[0] = kMin + (1 - gsr)*rng
             k[1] = kMin + gsr*rng
             ent[0] = ent[1]
-            ENH, ent[1], ovr[1] = golden(k[1], guv, duv)
+            ENH[:, :, 1], ent[1], ovr[1] = golden(k[1], guv, duv)
     ovr = ovr_.mean()
     k = k_.mean()
-    HSI[:, :, 2] = ENH
+    HSI[:, :, 2] = ENH[:, :, 0]
     kmg = hsi2rgb(HSI)
-    kmg = np.uint8(kmg*img.L)
+    kmg = kmg*jmg.size
     
     return kmg, ovr, k
 
-def resize_img(jmg):
-    v, u, w = jmg.shape
+def resize_img(img):
+    v, u, w = img.shape
     if u > v:
-        k = [HEIGHT, WIDTH]
+        dim = [HEIGHT, WIDTH]
     else:
-        k = [WIDTH, HEIGHT]
-    jmg = misc.imresize(jmg, k, 'bilinear')
+        dim = [WIDTH, HEIGHT]
+    img = misc.imresize(img, dim, 'bilinear')
 
-    return jmg
+    return img
 
 def load_imgs(imgs_dir):
     filenames = [join(imgs_dir, file) for file in listdir(imgs_dir) \
                                      if isfile(join(imgs_dir, file))]
-    imgs = [ndimage.imread(img) for img in filenames]
+    imgs = [ndimage.imread(img, 'L') for img in filenames]
     return imgs
 
 def fspecial_gaussian(size, sigma):
     x, y = np.mgrid[-size//2 + 1:size//2 + 1, -size//2 + 1:size//2 + 1]
     g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
     return g/g.sum()
+        
