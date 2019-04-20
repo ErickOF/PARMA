@@ -56,7 +56,7 @@ def hsi2rgb(hsi):
     R[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx])/np.cos(np.pi/3 - H[idx]))
     G[idx] = 3*I[idx] - (R[idx] + B[idx])
     # BG sector (2*pi/3 <= H < 4*pi/3).
-    idx = (2*pi/3 <= H) & (H < 4*np.pi/3)
+    idx = (2*np.pi/3 <= H) & (H < 4*np.np.pi/3)
     R[idx] = I[idx]*(1 - S[idx])
     G[idx] = I[idx]*(1 + S[idx]*np.cos(H[idx] - 2*np.pi/3)/np.cos(np.pi - H[idx]))
     B[idx] = 3*I[idx] - (R[idx] + G[idx])
@@ -67,8 +67,8 @@ def hsi2rgb(hsi):
     R[idx] = 3*I[idx] - (G[idx] + B[idx])
     # Combine all three results into an RGB image.  Clip to [0, 1] to
     # compensate for floating-point arithmetic rounding effects.
-    rgb = np.dstack((R, G, B));
-    rgb = rgb.min(1).max(0);
+    rgb = np.dstack((R, G, B))
+    rgb = rgb.min(1).max(0)
     return rgb
 
 def stretch(img):
@@ -175,7 +175,7 @@ def load_imgs(imgs_dir):
     imgs = [ndimage.imread(img) for img in filenames]
     return imgs
 
-def fspecial(size, sigma):
+def fspecial_gaussian(size, sigma):
     x, y = np.mgrid[-size//2 + 1:size//2 + 1, -size//2 + 1:size//2 + 1]
     g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
     return g/g.sum()
