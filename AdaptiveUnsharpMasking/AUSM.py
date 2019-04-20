@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
-import os
 from os import listdir
 from os.path import isfile, join
 
 from scipy import misc, ndimage, stats
 
 
-DATASET_DIR = 'imgs'
+# Change this for your folders
+DATASET_DIR = 'cells\cells_test\images'
 SAVE_DIR = 'imgs'
 
 HEIGHT, WIDTH = 360, 480
@@ -197,3 +197,27 @@ def plot_img(img, ausm):
 
 def save_img(img, name):
     misc.imsave(name, img)
+
+
+if __name__ == '__main__':
+    imgs, paths = load_imgs(DATASET_DIR)
+    
+    for img, path in zip(imgs, paths):
+        MAX_PIXEL_VALUE_IMG = img.max();
+        img = img * MAX_PIXEL_VALUE/MAX_PIXEL_VALUE_IMG
+        # Filter
+        F = fspecial_gaussian(3, 0.5)
+        filtered_img = ndimage.correlate(img, F, mode='constant')
+        JPG = np.dstack((filtered_img, filtered_img, filtered_img))
+      
+        RGB = resize_img(JPG)
+      
+        ausm, ovr, k = AUSM_GRAY(RGB, 0, 2, 0.01)
+        #f = strsplit(filename, '.')(1)
+        #imwrite(ausmImg, strcat('filtered1/', num2str(job), '.png'))
+        
+        filename = path.split('\\')[-1].replace('.', '_ausm.')
+        new_name = join(SAVE_DIR, filename)
+        save_img(MAX_PIXEL_VALUE_IMG*ausm[:, :, 0]/MAX_PIXEL_VALUE, new_name)
+        
+        #plot_img(img, ausm)
