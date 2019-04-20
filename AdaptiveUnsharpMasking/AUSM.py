@@ -1,4 +1,9 @@
 import numpy as np
+
+import os
+from os import listdir
+from os.path import isfile, join
+
 from scipy import misc, ndimage, stats
 
 
@@ -153,7 +158,7 @@ def AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01):
     
     return kmg, ovr, k
 
-def resizeImg(jmg):
+def resize_img(jmg):
     v, u, w = jmg.shape
     if u > v:
         k = [HEIGHT, WIDTH]
@@ -162,3 +167,9 @@ def resizeImg(jmg):
     jmg = misc.imresize(jmg, k, 'bilinear')
 
     return jmg
+
+def load_images(imgs_dir):
+    filenames = [join(imgs_dir, file) for file in listdir(imgs_dir) \
+                                     if isfile(join(imgs_dir, file))]
+    imgs = [ndimage.imread(img) for img in filenames]
+    return imgs
