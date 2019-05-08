@@ -5,3 +5,6 @@ Contains two implementations of AUSM written in Python 3.6 and Octave 4.1.1
 
 ## Scripts
 Contains some useful functions
+### Images Plotter
+### Dataset Splitter
+### Regularized Distance Transform
