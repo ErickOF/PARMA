@@ -124,8 +124,8 @@ kMin - Minimun gain
 kMax - Maximun gain
 tol - Solution tolerance
 """
-def AUSM_GRAY(jmg, kMin=0, kMax=2, tol=0.01):
-    H = (0.125)*np.array([[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]])
+def AUSM_GRAY(jmg, K=8, kMin=0, kMax=2, tol=0.01):
+    H = (1/(2*K))*np.array([[-1, -1, -1], [-1, K, -1], [-1, -1, -1]])
     jmg = stretch(jmg)
     
     HSI = rgb2hsi(jmg)/MAX_PIXEL_VALUE
