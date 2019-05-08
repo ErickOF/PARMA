@@ -1,7 +1,9 @@
 clc;
 clear all;
 close all;
+
 dbstop if error;
+
 pkg load image;
 
 
@@ -113,8 +115,8 @@ kMin - Minimun gain
 kMax - Maximun gain
 tol - Solution tolerance
 #}
-function [kmg, ovr, k] = AUSM_GRAY(img, jmg, K=8, kMin=0, kMax=2, tol=0.01)
-  H = (0.125)*[-1 -1 -1; -1 4 -1; -1 -1 -1];
+function [kmg, ovr, k] = ausm_gray(img, jmg, K=8, kMin=0, kMax=2, tol=0.01)
+  H = (1/(2*K))*[-1 -1 -1; -1 K -1; -1 -1 -1];
   jmg = stretch(img, jmg);
   
   HSI = rgb2hsi(jmg);
@@ -197,21 +199,25 @@ end
 
 
 % Main
-[filename, path, index] = uigetfile('C:\\Users\\ErickOF\\Google Drive\\PARMA\\Datasets\\B2\\*.tif');
+[filename, path, index] = uigetfile('C:\\Users\\ErickOF\\Downloads\*.png');
 
 if index > 0,
-  loadedImg = double(imread([path filename]));
-  loadedImg *= img.L/max(loadedImg(:)(:)(:));
+  loadedImg = double(rgb2gray(imread([path filename])));
+  #loadedImg = img.L*loadedImg / max(loadedImg(:)(:)(:));
+  
+  fig(end + 1) = getFig();
+  plotImg(fig(end), loadedImg, filename, job);
+  
   filter = fspecial("gaussian", [3 3], 0.5);
   loadedImg = imfilter(loadedImg, filter, 'same');
   img.JPG = cat(3, loadedImg, loadedImg, loadedImg);
-  
   [img, img.RGB] = resizeImg(img, img.JPG);
+  #img.RGB = img.JPG;
+  [ausmImg, ovr, k] = ausm_gray(img, img.RGB, 16, 2, 5, 0.01);
   fig(end + 1) = getFig();
-  plotImg(fig(end), img.RGB, filename, job);
+  plotImg(fig(end), ausmImg, filename, job);
   
-  [ausmImg, ovr, k] = AUSM_GRAY(img, img.RGB, 0, 1, 0.01);
-  f = strsplit(filename, '.')(1);
-  imwrite(ausmImg, strcat('filtered1/', num2str(job), '.png'));
-  #plotImg(fig(end), ausmImg, filename, job);
+  #f = strsplit(filename, '.')(1);
+  #ausmImg = ausmImg/max(ausmImg(:)(:)(:));
+  #imwrite(ausmImg, strcat('filtered1/', num2str(job), '.png'));
 end;
