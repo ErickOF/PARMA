@@ -1,7 +1,7 @@
 pkg load image;
 
 % Dataset folder
-in_dir = '.\C4_Cisplatino\GT\';
+in_dir = '.\save\';
 % Saving folder
 out_dir = '.\DT\';
 dataset = dir(strcat(in_dir,'*.png'));
