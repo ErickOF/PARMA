@@ -1,14 +1,19 @@
+pkg load image;
 
-in_dir = '.\GT_BBBC\';             % Dataset folder
-out_dir = '.\DT\';      % Saving folder
+% Dataset folder
+in_dir = '.\C4_Cisplatino\GT\';
+% Saving folder
+out_dir = '.\DT\';
 dataset = dir(strcat(in_dir,'*.png'));
-
 parfor k = 1:length(dataset)
     img_name = dataset(k).name;
-    img = imread(strcat(in_dir, img_name));    % Read the image
-    new_img = zeros(size(img));                     % New image to save
+    % Read the image
+    img = imread(strcat(in_dir, img_name));
+    % New image to save
+    new_img = zeros(size(img));
     labels = unique(img);
-    for idx = 2:length(labels)                      % Iterate over each cell
+    % Iterate over each cell
+    for idx = 2:length(labels)
         cell = (img == labels(idx));
         dist_trans = bwdist(~cell);
         cell_weighted = dist_trans / max(max(dist_trans));
@@ -20,4 +25,5 @@ parfor k = 1:length(dataset)
     end
     imwrite(new_img,strcat(out_dir, img_name));
     disp(strcat('Ready: ', img_name));
+    printf("Listo");
 end
