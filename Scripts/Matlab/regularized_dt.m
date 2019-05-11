@@ -1,10 +1,11 @@
 pkg load image;
 
 % Dataset folder
-in_dir = '.\save\';
+in_dir = '.\..\save\gt\';
 % Saving folder
-out_dir = '.\DT\';
+out_dir = '.\..\save\dt\';
 dataset = dir(strcat(in_dir,'*.png'));
+
 parfor k = 1:length(dataset)
     img_name = dataset(k).name;
     % Read the image
@@ -25,5 +26,5 @@ parfor k = 1:length(dataset)
     end
     imwrite(new_img,strcat(out_dir, img_name));
     disp(strcat('Ready: ', img_name));
-    printf("Listo");
+    printf("Listo\n");
 end
