@@ -199,10 +199,10 @@ end
 
 
 % Main
-[filename, path, index] = uigetfile('C:\\Users\\ErickOF\\Downloads\*.png');
+[filename, path, index] = uigetfile('C:\\Users\\ErickOF\\Documents\*.png');
 
 if index > 0,
-  loadedImg = double(rgb2gray(imread([path filename])));
+  loadedImg = double(imread([path filename]));
   #loadedImg = img.L*loadedImg / max(loadedImg(:)(:)(:));
   
   fig(end + 1) = getFig();
