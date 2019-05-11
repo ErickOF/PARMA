@@ -9,12 +9,12 @@ from scipy import misc, ndimage, stats
 
 
 # Change this for your folders
-MAINDIR = '..\..\..\dataset'
-LOAD_DIR = 'cells'
+MAINDIR = '..\scripts\save'
+LOAD_DIR = 'original'
 #DIR = 'cells_test\images'
 #DIR = 'cells_train\images'
-DIR = 'cells_validation\images'
-SAVE_DIR = 'cells_ausm5'
+DIR = ''
+SAVE_DIR = 'ca_ausm2'
 
 HEIGHT, WIDTH = 360, 480
 MAX_PIXEL_VALUE = 255
@@ -217,15 +217,15 @@ if __name__ == '__main__':
         JPG = np.dstack((filtered_img, filtered_img, filtered_img))
         
         # Params 1
-        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 1, 0.01)
+        #ausm, ovr, k = AUSM_GRAY(JPG, 8, 0, 1, 0.01)
         # Params 2
-        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 2, 0.01)
+        #ausm, ovr, k = AUSM_GRAY(JPG, 8, 0, 2, 0.01)
         # Params 3
-        #ausm, ovr, k = AUSM_GRAY(JPG, 0, 4, 0.01)
+        #ausm, ovr, k = AUSM_GRAY(JPG, 8, 0, 4, 0.01)
         # Params 4
-        #ausm, ovr, k = AUSM_GRAY(JPG, 2, 4, 0.01)
+        #ausm, ovr, k = AUSM_GRAY(JPG, 8, 2, 4, 0.01)
         # Params 5
-        ausm, ovr, k = AUSM_GRAY(JPG, 2, 6, 0.01)
+        ausm, ovr, k = AUSM_GRAY(JPG, 16, 2, 6, 0.01)
         
         filename = path.split('\\')[-1]
         new_name = join(save_dir, filename)
