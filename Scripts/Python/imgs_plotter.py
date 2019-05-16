@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+import numpy as np
 from scipy import ndimage
 
 
@@ -14,6 +14,7 @@ if __name__ == '__main__':
     img2 = ndimage.imread(IMG2_PATH)
     img3 = ndimage.imread(IMG3_PATH)
     img4 = ndimage.imread(IMG4_PATH)
+    print(img1.dtype, img2.dtype, img3.dtype, img4.dtype)
     
     plt.subplot(221)
     plt.imshow(img1, cmap='gray')
